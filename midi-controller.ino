@@ -2,6 +2,7 @@
 
 const int potPin = 2;
 int val = 0;
+int oldVal = 0;
 int adjusted = 0;
 
 void noteOn(byte channel, byte pitch, byte velocity) {
@@ -33,12 +34,15 @@ int scaledValue(int minVal, int maxVal, int value) {
 }
 
 void loop() {
+  oldVal = val;
   val = analogRead(potPin);
-  adjusted = scaledValue(0, 1024, val);
-  Serial.println("val:      " + String(val));
-  Serial.println("adjusted: " + String(adjusted));
-  controlChange(0, 10, adjusted);
-  MidiUSB.flush();
+  if (oldVal != val) {
+    adjusted = scaledValue(0, 1024, val);
+    Serial.println("val:      " + String(val));
+    Serial.println("adjusted: " + String(adjusted));
+    controlChange(0, 10, adjusted);
+    MidiUSB.flush();
+  }
   delay(500);
 }
 
