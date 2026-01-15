@@ -1,9 +1,11 @@
 #include "MIDIUSB.h"
 
 const int potPin = 2;
-int val = 0;
-int oldVal = 0;
-int adjusted = 0;
+int val[] = {0, 0, 0, 0, 0, 0};
+int oldVal[] = {0, 0, 0, 0, 0, 0};
+int controller[] = {10, 11, 12, 13, 14, 15};
+/* The channel stored here starts at 0, which represents midi channel 1 */
+int channel = 10;
 
 void noteOn(byte channel, byte pitch, byte velocity) {
   midiEventPacket_t noteOn = {0x09, 0x90 | channel, pitch, velocity};
@@ -33,28 +35,19 @@ int scaledValue(int minVal, int maxVal, int value) {
   return returnVal;
 }
 
-void loop() {
-  oldVal = val;
-  val = analogRead(potPin);
-  if (oldVal != val) {
-    adjusted = scaledValue(0, 1024, val);
-    Serial.println("val:      " + String(val));
-    Serial.println("adjusted: " + String(adjusted));
-    controlChange(0, 10, adjusted);
+void readPin(int pin){
+  int adjusted = 0;
+  oldVal[pin] =val[pin];
+  adjusted = scaledValue(0, 1024, analogRead(pin));
+  val[pin] = adjusted;
+  if (oldVal[pin] != val[pin]) {
+    controlChange(channel, controller[pin], adjusted);
     MidiUSB.flush();
   }
-  delay(500);
 }
 
-/* void loop() { */
-/*   Serial.println("Sending note on"); */
-/*   noteOn(0, 48, 64);   // Channel 0, middle C, normal velocity */
-/*   MidiUSB.flush(); */
-/*   delay(500); */
-/*   Serial.println("Sending note off"); */
-/*   noteOff(0, 48, 64);  // Channel 0, middle C, normal velocity */
-/*   MidiUSB.flush(); */
-/*   delay(1500); */
-
-/*   // controlChange(0, 10, 65); // Set the value of controller 10 on channel 0 to 65 */
-/* } */
+void loop() {
+  readPin(2);
+  /* Probably won't need the delay when reading lots of pins?*/
+  delay(20);
+}
